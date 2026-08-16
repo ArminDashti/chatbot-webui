@@ -147,6 +147,7 @@ export async function sendMessageStream(
   conversationId: string,
   body: string,
   onEvent: (ev: { type: string; text?: string; message?: ChatMessage; error?: string }) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const token = getToken()
   if (!token) throw new Error('Not authenticated')
@@ -159,6 +160,7 @@ export async function sendMessageStream(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ body }),
+      signal,
     },
   )
   if (!response.ok || !response.body) {
@@ -241,6 +243,30 @@ export function putGroupRule(id: string, body: string): Promise<{ body: string }
 
 export function fetchUsers(): Promise<User[]> {
   return apiFetch<User[]>('/api/v1/admin/users', {}, true)
+}
+
+export type ChatSettings = {
+  chat_base_url: string
+  chat_model: string
+  chat_api_key_set: boolean
+  chat_api_key_hint: string
+}
+
+export function fetchSettings(): Promise<ChatSettings> {
+  return apiFetch<ChatSettings>('/api/v1/admin/settings', {}, true)
+}
+
+export function putSettings(body: {
+  chat_base_url: string
+  chat_model: string
+  chat_api_key?: string
+  clear_chat_api_key?: boolean
+}): Promise<ChatSettings> {
+  return apiFetch<ChatSettings>(
+    '/api/v1/admin/settings',
+    { method: 'PUT', body: JSON.stringify(body) },
+    true,
+  )
 }
 
 export function formatDateTime(iso: string): string {

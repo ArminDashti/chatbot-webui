@@ -50,6 +50,7 @@ onBeforeUnmount(() => {
           <RouterLink :class="navLinkClass" :active-class="navLinkActiveClass" to="/chat/users/profile">Profile</RouterLink>
           <template v-if="isAdmin">
             <RouterLink :class="navLinkClass" :active-class="navLinkActiveClass" to="/admin">Admin</RouterLink>
+            <RouterLink :class="navLinkClass" :active-class="navLinkActiveClass" to="/admin/settings">Settings</RouterLink>
             <RouterLink :class="navLinkClass" :active-class="navLinkActiveClass" to="/admin/chats/history">All chats</RouterLink>
             <RouterLink :class="navLinkClass" :active-class="navLinkActiveClass" to="/admin/chats/stats">Stats</RouterLink>
             <RouterLink :class="navLinkClass" :active-class="navLinkActiveClass" to="/admin/chat/rules">Rules</RouterLink>

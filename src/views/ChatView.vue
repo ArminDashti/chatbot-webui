@@ -22,6 +22,11 @@ const sending = ref(false)
 const errorMessage = ref<string | null>(null)
 const streamText = ref('')
 const listEl = ref<HTMLElement | null>(null)
+let abortStream: AbortController | null = null
+
+function onStop() {
+  abortStream?.abort()
+}
 
 async function loadList() {
   conversations.value = await fetchConversations()
@@ -62,8 +67,12 @@ async function onSend() {
   draft.value = ''
   sending.value = true
   streamText.value = ''
+  abortStream = new AbortController()
   try {
-    await sendMessageStream(id, text, (ev) => {
+    await sendMessageStream(
+      id,
+      text,
+      (ev) => {
       if (ev.type === 'user' && ev.message) {
         messages.value = [...messages.value, ev.message]
       }
@@ -78,11 +87,16 @@ async function onSend() {
       if (ev.type === 'error') {
         errorMessage.value = ev.error ?? 'Chat failed'
       }
-    })
+    }, abortStream.signal)
     await loadList()
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'Send failed'
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      errorMessage.value = null
+    } else {
+      errorMessage.value = err instanceof Error ? err.message : 'Send failed'
+    }
   } finally {
+    abortStream = null
     sending.value = false
     await nextTick()
     scrollBottom()
@@ -163,7 +177,8 @@ watch(
             placeholder="Message"
             @keydown.enter.exact.prevent="onSend"
           />
-          <Button type="submit" :disabled="sending">{{ sending ? '…' : 'Send' }}</Button>
+          <Button v-if="sending" type="button" variant="outline" @click="onStop">Stop</Button>
+          <Button v-else type="submit">Send</Button>
         </div>
       </form>
     </section>

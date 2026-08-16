@@ -13,4 +13,4 @@ npm run dev
 - API (proxied): `http://127.0.0.1:8134`
 - Default login: `armin` / `dopadopa123`
 
-Chat replies need `chatbot-api` running with `CHAT_API_KEY` pointing at `cursor-api`.
+Chat replies need `chatbot-api` running. Set the cursor-api gateway key in **Admin → Settings**.

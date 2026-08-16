@@ -8,6 +8,7 @@ import AdminStatsView from '@/views/AdminStatsView.vue'
 import AdminRulesView from '@/views/AdminRulesView.vue'
 import AdminGroupRulesView from '@/views/AdminGroupRulesView.vue'
 import AdminGroupCreateView from '@/views/AdminGroupCreateView.vue'
+import AdminSettingsView from '@/views/AdminSettingsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import { getToken, getStoredUser } from '@/lib/auth'
 
@@ -48,6 +49,12 @@ const router = createRouter({
       path: '/admin/chat/group/create',
       name: 'admin-group-create',
       component: AdminGroupCreateView,
+      meta: { requiresAuth: true, admin: true },
+    },
+    {
+      path: '/admin/settings',
+      name: 'admin-settings',
+      component: AdminSettingsView,
       meta: { requiresAuth: true, admin: true },
     },
   ],
