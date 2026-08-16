@@ -49,6 +49,10 @@
     @apply border-border;
   }
 
+  html {
+    color-scheme: light dark;
+  }
+
   html,
   body,
   #app {

@@ -9,6 +9,7 @@ import AdminRulesView from '@/views/AdminRulesView.vue'
 import AdminGroupRulesView from '@/views/AdminGroupRulesView.vue'
 import AdminGroupCreateView from '@/views/AdminGroupCreateView.vue'
 import AdminSettingsView from '@/views/AdminSettingsView.vue'
+import AdminUsersView from '@/views/AdminUsersView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import { getToken, getStoredUser } from '@/lib/auth'
 
@@ -55,6 +56,12 @@ const router = createRouter({
       path: '/admin/settings',
       name: 'admin-settings',
       component: AdminSettingsView,
+      meta: { requiresAuth: true, admin: true },
+    },
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: AdminUsersView,
       meta: { requiresAuth: true, admin: true },
     },
   ],

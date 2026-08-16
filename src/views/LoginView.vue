@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Lock, LogIn, User } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { IconLabel } from '@/components/ui/icon-label'
 import { login } from '@/lib/auth'
 import { useAuth } from '@/lib/useAuth'
+import { t } from '@/lib/locale'
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -27,7 +31,7 @@ async function onSubmit() {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/chat'
     await router.push(redirect)
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'Login failed'
+    errorMessage.value = err instanceof Error ? err.message : t('loginFailed')
   } finally {
     submitting.value = false
   }
@@ -35,16 +39,21 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-full max-w-md items-center px-4 py-14">
+  <div class="mx-auto flex min-h-full max-w-md flex-col items-center justify-center gap-3 px-4 py-14">
+    <div class="flex w-full justify-end">
+      <LocaleSwitcher />
+    </div>
     <Card class="w-full">
       <CardHeader>
-        <CardTitle class="tracking-tight">Log in</CardTitle>
-        <CardDescription>Company chatbot</CardDescription>
+        <CardTitle class="tracking-tight">
+          <IconLabel :icon="LogIn" mirror-rtl>{{ t('loginTitle') }}</IconLabel>
+        </CardTitle>
+        <CardDescription>{{ t('loginDescription') }}</CardDescription>
       </CardHeader>
       <CardContent>
         <form class="space-y-3" @submit.prevent="onSubmit">
           <label class="block space-y-1 text-sm">
-            <span>Username</span>
+            <IconLabel :icon="User">{{ t('username') }}</IconLabel>
             <input
               v-model="username"
               type="text"
@@ -54,7 +63,7 @@ async function onSubmit() {
             />
           </label>
           <label class="block space-y-1 text-sm">
-            <span>Password</span>
+            <IconLabel :icon="Lock">{{ t('password') }}</IconLabel>
             <input
               v-model="password"
               type="password"
@@ -65,7 +74,7 @@ async function onSubmit() {
           </label>
           <p v-if="errorMessage" class="text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
           <Button class="w-full" type="submit" :disabled="submitting">
-            {{ submitting ? 'Signing in…' : 'Log in' }}
+            <IconLabel :icon="LogIn" mirror-rtl>{{ submitting ? t('signingIn') : t('logIn') }}</IconLabel>
           </Button>
         </form>
       </CardContent>

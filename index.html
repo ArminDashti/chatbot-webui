@@ -10,12 +10,18 @@
     <title>Company Chatbot</title>
     <script>
       try {
-        if (localStorage.getItem('chatbot-theme') !== 'light') {
-          document.documentElement.classList.add('dark')
+        var stored = localStorage.getItem('chatbot-theme')
+        var dark =
+          stored === 'dark' ||
+          (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        if (dark) document.documentElement.classList.add('dark')
+        var loc = localStorage.getItem('chatbot-locale')
+        if (loc !== 'en' && loc !== 'fa') {
+          loc = (navigator.language || '').toLowerCase().indexOf('fa') === 0 ? 'fa' : 'en'
         }
-      } catch (e) {
-        document.documentElement.classList.add('dark')
-      }
+        document.documentElement.lang = loc
+        document.documentElement.dir = loc === 'fa' ? 'rtl' : 'ltr'
+      } catch (e) {}
     </script>
   </head>
   <body>

@@ -50,13 +50,33 @@ export default defineConfig({
     host: true,
     port: 5184,
     allowedHosts: true,
+    watch: {
+      usePolling: process.env.CHOKIDAR_USEPOLLING === 'true',
+    },
+    hmr: {
+      host: 'localhost',
+      clientPort: 5184,
+    },
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8134',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8134',
         changeOrigin: true,
+        timeout: 0,
+        proxyTimeout: 0,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes, _req, res) => {
+            const contentType = proxyRes.headers['content-type']
+            if (typeof contentType === 'string' && contentType.includes('text/event-stream')) {
+              proxyRes.headers['cache-control'] = 'no-cache, no-transform'
+              proxyRes.headers['x-accel-buffering'] = 'no'
+              res.setHeader('Cache-Control', 'no-cache, no-transform')
+              res.setHeader('X-Accel-Buffering', 'no')
+            }
+          })
+        },
       },
       '/health': {
-        target: 'http://127.0.0.1:8134',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8134',
         changeOrigin: true,
       },
     },

@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { Save, Shield } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { IconLabel } from '@/components/ui/icon-label'
 import { fetchGroups, putGroupRule, type Group } from '@/lib/auth'
+import { t } from '@/lib/locale'
 
 const groups = ref<Group[]>([])
 const selectedId = ref('')
@@ -34,7 +37,7 @@ async function onSave() {
     if (g) g.rule_body = body.value
     saved.value = true
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'Save failed'
+    errorMessage.value = err instanceof Error ? err.message : t('saveFailed')
   }
 }
 </script>
@@ -43,7 +46,9 @@ async function onSave() {
   <div class="h-full overflow-auto p-4">
     <Card>
       <CardHeader>
-        <CardTitle>Group rules</CardTitle>
+        <CardTitle>
+          <IconLabel :icon="Shield">{{ t('groupRules') }}</IconLabel>
+        </CardTitle>
       </CardHeader>
       <CardContent class="space-y-3">
         <select
@@ -53,11 +58,13 @@ async function onSave() {
         >
           <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name }}</option>
         </select>
-        <p v-if="!groups.length" class="text-sm text-muted-foreground">Create a group first.</p>
+        <p v-if="!groups.length" class="text-sm text-muted-foreground">{{ t('createGroupFirst') }}</p>
         <textarea v-model="body" rows="12" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
         <p v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</p>
-        <p v-if="saved" class="text-sm text-green-600">Saved.</p>
-        <Button :disabled="!selectedId" @click="onSave">Save</Button>
+        <p v-if="saved" class="text-sm text-green-600">{{ t('saved') }}</p>
+        <Button :disabled="!selectedId" @click="onSave">
+          <IconLabel :icon="Save">{{ t('save') }}</IconLabel>
+        </Button>
       </CardContent>
     </Card>
   </div>

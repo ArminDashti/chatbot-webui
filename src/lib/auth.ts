@@ -135,8 +135,13 @@ export function createConversation(title = ''): Promise<Conversation> {
   )
 }
 
-export function fetchConversations(): Promise<Conversation[]> {
-  return apiFetch<Conversation[]>('/api/v1/conversations', {}, true)
+export function fetchConversations(query = ''): Promise<Conversation[]> {
+  const q = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''
+  return apiFetch<Conversation[]>(`/api/v1/conversations${q}`, {}, true)
+}
+
+export function deleteConversation(id: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/conversations/${encodeURIComponent(id)}`, { method: 'DELETE' }, true)
 }
 
 export function fetchConversation(id: string): Promise<ConversationDetail> {
@@ -176,19 +181,32 @@ export async function sendMessageStream(
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
+
+  const emitParts = (chunk: string, flushRemainder: boolean) => {
+    buffer += chunk
     const parts = buffer.split('\n\n')
-    buffer = parts.pop() ?? ''
+    if (!flushRemainder) {
+      buffer = parts.pop() ?? ''
+    } else {
+      buffer = ''
+    }
     for (const part of parts) {
+      if (!part.trim()) continue
       const line = part.split('\n').find((l) => l.startsWith('data:'))
       if (!line) continue
       const json = line.slice(5).trim()
       if (!json) continue
       onEvent(JSON.parse(json) as { type: string; text?: string; message?: ChatMessage; error?: string })
     }
+  }
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) {
+      emitParts(decoder.decode(), true)
+      break
+    }
+    emitParts(decoder.decode(value, { stream: true }), false)
   }
 }
 
@@ -245,11 +263,41 @@ export function fetchUsers(): Promise<User[]> {
   return apiFetch<User[]>('/api/v1/admin/users', {}, true)
 }
 
+export function createUser(body: {
+  username: string
+  password: string
+  display_name?: string
+  role?: string
+}): Promise<User> {
+  return apiFetch<User>('/api/v1/admin/users', { method: 'POST', body: JSON.stringify(body) }, true)
+}
+
+export function patchUser(
+  id: string,
+  body: { username?: string; display_name?: string; role?: string; password?: string },
+): Promise<User> {
+  return apiFetch<User>(
+    `/api/v1/admin/users/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(body) },
+    true,
+  )
+}
+
+export function deleteUser(id: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/admin/users/${encodeURIComponent(id)}`, { method: 'DELETE' }, true)
+}
+
 export type ChatSettings = {
   chat_base_url: string
   chat_model: string
   chat_api_key_set: boolean
   chat_api_key_hint: string
+  chat_api_key_source: 'settings' | 'env' | string
+  allowed_folders: string[]
+}
+
+export function fetchChatReady(): Promise<{ ready: boolean }> {
+  return apiFetch<{ ready: boolean }>('/api/v1/chat/ready', {}, true)
 }
 
 export function fetchSettings(): Promise<ChatSettings> {
@@ -261,6 +309,7 @@ export function putSettings(body: {
   chat_model: string
   chat_api_key?: string
   clear_chat_api_key?: boolean
+  allowed_folders?: string[]
 }): Promise<ChatSettings> {
   return apiFetch<ChatSettings>(
     '/api/v1/admin/settings',
