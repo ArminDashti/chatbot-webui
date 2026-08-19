@@ -3,7 +3,10 @@ import vue from '@vitejs/plugin-vue'
 import path from 'node:path'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const basePath = process.env.VITE_BASE_PATH || '/'
+
 export default defineConfig({
+  base: basePath,
   plugins: [
     vue(),
     VitePWA({
@@ -13,7 +16,7 @@ export default defineConfig({
         name: 'Company Chatbot',
         short_name: 'Chatbot',
         description: 'Company chatbot WebUI',
-        start_url: '/',
+        start_url: basePath,
         display: 'standalone',
         background_color: '#0b1220',
         theme_color: '#0284c7',
@@ -28,7 +31,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: ({ request, url }) =>
-              request.method === 'GET' && url.pathname.startsWith('/api/'),
+              request.method === 'GET' && url.pathname.includes('/api/'),
             handler: 'NetworkOnly',
             options: {
               cacheName: 'chatbot-api-get',

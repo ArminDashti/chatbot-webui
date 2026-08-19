@@ -39,7 +39,7 @@ export function t(key: MessageKey, vars?: Record<string, string>): string {
   let text: string = dictionaries[locale.value][key] ?? en[key]
   if (vars) {
     for (const [name, value] of Object.entries(vars)) {
-      text = text.replaceAll(`{${name}}`, value)
+      text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), value)
     }
   }
   return text

@@ -1,0 +1,8 @@
+.git
+.armin
+node_modules
+dist
+dev-dist
+.env
+*.log
+*.exe
