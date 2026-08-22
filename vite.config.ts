@@ -4,6 +4,23 @@ import path from 'node:path'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const basePath = process.env.VITE_BASE_PATH || '/'
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8134'
+const baseNoSlash = basePath.replace(/\/$/, '') || ''
+const configureSseProxy = (proxy: {
+  on: (event: string, fn: (...args: unknown[]) => void) => void
+}) => {
+  proxy.on('proxyRes', (proxyRes: { headers: Record<string, unknown> }, _req: unknown, res: {
+    setHeader: (k: string, v: string) => void
+  }) => {
+    const contentType = proxyRes.headers['content-type']
+    if (typeof contentType === 'string' && contentType.includes('text/event-stream')) {
+      proxyRes.headers['cache-control'] = 'no-cache, no-transform'
+      proxyRes.headers['x-accel-buffering'] = 'no'
+      res.setHeader('Cache-Control', 'no-cache, no-transform')
+      res.setHeader('X-Accel-Buffering', 'no')
+    }
+  })
+}
 
 export default defineConfig({
   base: basePath,
@@ -27,7 +44,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}'],
-        navigateFallback: '/index.html',
+        navigateFallback: basePath === '/' ? '/index.html' : `${baseNoSlash}/index.html`,
         runtimeCaching: [
           {
             urlPattern: ({ request, url }) =>
@@ -51,35 +68,37 @@ export default defineConfig({
   },
   server: {
     host: true,
-    port: 5184,
+    port: Number(process.env.VITE_DEV_PORT || 5184),
     allowedHosts: true,
     watch: {
       usePolling: process.env.CHOKIDAR_USEPOLLING === 'true',
     },
     hmr: {
-      host: 'localhost',
-      clientPort: 5184,
+      clientPort: Number(process.env.VITE_HMR_CLIENT_PORT || process.env.VITE_DEV_PORT || 5184),
     },
     proxy: {
-      '/api': {
-        target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8134',
+      [`${baseNoSlash}/api`]: {
+        target: apiProxyTarget,
         changeOrigin: true,
         timeout: 0,
         proxyTimeout: 0,
-        configure: (proxy) => {
-          proxy.on('proxyRes', (proxyRes, _req, res) => {
-            const contentType = proxyRes.headers['content-type']
-            if (typeof contentType === 'string' && contentType.includes('text/event-stream')) {
-              proxyRes.headers['cache-control'] = 'no-cache, no-transform'
-              proxyRes.headers['x-accel-buffering'] = 'no'
-              res.setHeader('Cache-Control', 'no-cache, no-transform')
-              res.setHeader('X-Accel-Buffering', 'no')
-            }
-          })
-        },
+        rewrite: (p) => p.replace(new RegExp(`^${baseNoSlash}/api`), '/api'),
+        configure: configureSseProxy,
+      },
+      '/api': {
+        target: apiProxyTarget,
+        changeOrigin: true,
+        timeout: 0,
+        proxyTimeout: 0,
+        configure: configureSseProxy,
+      },
+      [`${baseNoSlash}/health`]: {
+        target: apiProxyTarget,
+        changeOrigin: true,
+        rewrite: (p) => p.replace(new RegExp(`^${baseNoSlash}/health`), '/health'),
       },
       '/health': {
-        target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8134',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },
